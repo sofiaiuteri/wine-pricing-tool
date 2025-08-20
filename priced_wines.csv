@@ -1,0 +1,5 @@
+Name,Color,RetailPrice,ForcePremium,BottlePriceRaw,BottlePriceRnd,GlassPriceRaw,GlassPriceRnd,Premium_AddOn,Premium_Mult
+Chianti Classico,Red,25,False,62.5,65,12.5,15,,
+Sancerre,White,38,False,91.2,90,18.240000000000002,19,,
+Champagne Brut,Sparkling,65,False,136.5,135,27.3,29,,
+Barolo,Red,140,False,240.0,240,48.0,49,240.0,210.0
