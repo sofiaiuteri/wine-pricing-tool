@@ -150,14 +150,36 @@ if not df_in.empty:
         for c, r in zip(out["Color"], out["GlassPriceRnd"])
     ]
 
-    # diagnostics vs 1.20× and 1.25× (use ceiling to next 5/9)
-    out["GlassNeeded120"] = [needed_glass(b, Target120, c) for b, c in zip(out["BottlePriceRnd"], out["Color"])]
-    out["GlassNeeded125"] = [needed_glass(b, Target125, c) for b, c in zip(out["BottlePriceRnd"], out["Color"])]
-    out["CapBlocks120"]   = [(not pd.isna(n)) and (float(n) > float(GlassCap)) for n in out["GlassNeeded120"]]
-    out["CapBlocks125"]   = [(not pd.isna(n)) and (float(n) > float(GlassCap)) for n in out["GlassNeeded125"]]
+    # ---- Diagnostics (BTG worth it rule) ----
+SERVINGS = 5  # 5 glasses per bottle
 
-    out["GlassRevenueOK120"] = (out["GlassPrice"]*5 >= out["BottlePriceRnd"]*Target120).fillna(False)
-    out["GlassRevenueOK125"] = (out["GlassPrice"]*5 >= out["BottlePriceRnd"]*Target125).fillna(False)
+# Minimum glass price needed to hit 1.20× / 1.25× rule
+out["GlassNeeded120"] = [
+    menu_round_up((1.20 * b) / SERVINGS) for b in out["BottlePriceRnd"]
+]
+out["GlassNeeded125"] = [
+    menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]
+]
+
+# Cap blocking check
+out["CapBlocks120"] = [g > float(GlassCap) for g in out["GlassNeeded120"]]
+out["CapBlocks125"] = [g > float(GlassCap) for g in out["GlassNeeded125"]]
+
+# Actual check: does GlassPrice meet or exceed the needed price?
+out["GlassRevenueOK120"] = out["GlassPrice"] >= out["GlassNeeded120"]
+out["GlassRevenueOK125"] = out["GlassPrice"] >= out["GlassNeeded125"]
+
+# Extra: how many glasses would we need to sell at current GlassPrice?
+out["GlassesNeededFor120"] = np.ceil(
+    (1.20 * out["BottlePriceRnd"]) / out["GlassPrice"]
+).astype(int)
+out["GlassesNeededFor125"] = np.ceil(
+    (1.25 * out["BottlePriceRnd"]) / out["GlassPrice"]
+).astype(int)
+
+# Optional: is BTG “worth it”? (can hit target within 5 pours)
+out["BTG_WorthIt@120"] = out["GlassesNeededFor120"] <= SERVINGS
+out["BTG_WorthIt@125"] = out["GlassesNeededFor125"] <= SERVINGS
 
     # Arrow-friendly dtypes
     for col in ["BottlePriceRnd","GlassPriceRnd","GlassPrice","GlassNeeded120","GlassNeeded125"]:
