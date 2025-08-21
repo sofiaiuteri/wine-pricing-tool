@@ -144,19 +144,30 @@ if not df_in.empty:
     out["BottlePriceRnd"] = out["BottlePriceRaw"].apply(lambda x: pd.NA if pd.isna(x) else round_to_5_or_9(x))
     out["GlassPriceRnd"]  = out["GlassPriceRaw"].apply(lambda x: pd.NA if pd.isna(x) else round_to_5_or_9(x))
 
-    # final glass after cap/floors
-    out["GlassPrice"] = [
-        apply_glass_bounds(c, r, GlassCap, FloorRedSpark, FloorWhiteRose)
-        for c, r in zip(out["Color"], out["GlassPriceRnd"])
-    ]
+   # final glass after cap/floors
+out["GlassPrice"] = [
+    apply_glass_bounds(c, r, GlassCap, FloorRedSpark, FloorWhiteRose)
+    for c, r in zip(out["Color"], out["GlassPriceRnd"])
+]
 
-    # ---- Diagnostics (BTG worth it rule) ----
+# ----- Menu rounding helper: round UP to the next $..5 or $..9 -----
+def menu_round_up(price: float) -> int:
+    p = float(price)
+    tens = int(p // 10) * 10
+    candidates = [tens + 5, tens + 9, tens + 15, tens + 19]  # ends in 5 or 9
+    candidates = [c for c in candidates if c >= p]           # keep only >= p
+    if not candidates:
+        tens += 10
+        candidates = [tens + 5, tens + 9]
+    return int(min(candidates))
+
+# ----- Diagnostics (BTG worth-it rule) -----
 SERVINGS = 5  # 5 glasses per bottle
 
-# Minimum glass price needed to hit 1.20× / 1.25× rule
-out["GlassNeeded120"] = [
-    menu_round_up((1.20 * b) / SERVINGS) for b in out["BottlePriceRnd"]
-]
+# Minimum glass price needed to hit 1.20× / 1.25× rule (menu-rounded UP)
+out["GlassNeeded120"] = [menu_round_up((1.20 * b) / SERVINGS) for b in out["BottlePriceRnd"]]
+out["GlassNeeded125"] = [menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]]
+
 out["GlassNeeded125"] = [
     menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]
 ]
