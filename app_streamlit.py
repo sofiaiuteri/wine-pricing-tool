@@ -161,15 +161,15 @@ out["GlassNeeded125"] = [
     menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]
 ]
 
-# Cap blocking check
+# ---- Cap blocking check ----
 out["CapBlocks120"] = [g > float(GlassCap) for g in out["GlassNeeded120"]]
 out["CapBlocks125"] = [g > float(GlassCap) for g in out["GlassNeeded125"]]
 
-# Actual check: does GlassPrice meet or exceed the needed price?
+# ---- Actual check: does GlassPrice meet or exceed the needed price? ----
 out["GlassRevenueOK120"] = out["GlassPrice"] >= out["GlassNeeded120"]
 out["GlassRevenueOK125"] = out["GlassPrice"] >= out["GlassNeeded125"]
 
-# Extra: how many glasses would we need to sell at current GlassPrice?
+# ---- Extra: how many glasses would we need to sell at current GlassPrice? ----
 out["GlassesNeededFor120"] = np.ceil(
     (1.20 * out["BottlePriceRnd"]) / out["GlassPrice"]
 ).astype(int)
@@ -177,20 +177,23 @@ out["GlassesNeededFor125"] = np.ceil(
     (1.25 * out["BottlePriceRnd"]) / out["GlassPrice"]
 ).astype(int)
 
-# Optional: is BTG “worth it”? (can hit target within 5 pours)
+# ---- Optional: is BTG “worth it”? (can hit target within 5 pours) ----
 out["BTG_WorthIt@120"] = out["GlassesNeededFor120"] <= SERVINGS
 out["BTG_WorthIt@125"] = out["GlassesNeededFor125"] <= SERVINGS
 
-    # Arrow-friendly dtypes
-for col in ["BottlePriceRnd","GlassPriceRnd","GlassPrice","GlassNeeded120","GlassNeeded125"]:
-        out[col] = out[col].astype("Int64")
+# ---- Arrow-friendly dtypes ----
+for col in ["BottlePriceRnd", "GlassPriceRnd", "GlassPrice", "GlassNeeded120", "GlassNeeded125"]:
+    out[col] = out[col].astype("Int64")
 
-    cols = ["Name","Color","RetailPrice","ForcePremium",
-            "BottlePriceRaw","BottlePriceRnd",
-            "GlassPriceRaw","GlassPriceRnd","GlassPrice",
-            "Premium_AddOn","Premium_Mult",
-            "GlassRevenueOK120","GlassNeeded120","CapBlocks120",
-            "GlassRevenueOK125","GlassNeeded125","CapBlocks125"]
+# ---- Column ordering ----
+cols = [
+    "Name", "Color", "RetailPrice", "ForcePremium",
+    "BottlePriceRaw", "BottlePriceRnd",
+    "GlassPriceRaw", "GlassPriceRnd", "GlassPrice",
+    "Premium_AddOn", "Premium_Mult",
+    "GlassRevenueOK120", "GlassNeeded120", "CapBlocks120",
+    "GlassRevenueOK125", "GlassNeeded125", "CapBlocks125"
+]
 
     st.subheader("Results")
     st.dataframe(out[cols], use_container_width=True)
