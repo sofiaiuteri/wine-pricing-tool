@@ -182,7 +182,7 @@ out["BTG_WorthIt@120"] = out["GlassesNeededFor120"] <= SERVINGS
 out["BTG_WorthIt@125"] = out["GlassesNeededFor125"] <= SERVINGS
 
     # Arrow-friendly dtypes
-    for col in ["BottlePriceRnd","GlassPriceRnd","GlassPrice","GlassNeeded120","GlassNeeded125"]:
+for col in ["BottlePriceRnd","GlassPriceRnd","GlassPrice","GlassNeeded120","GlassNeeded125"]:
         out[col] = out[col].astype("Int64")
 
     cols = ["Name","Color","RetailPrice","ForcePremium",
