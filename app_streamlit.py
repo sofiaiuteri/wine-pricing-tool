@@ -163,33 +163,41 @@ def menu_round_up(price: float) -> int:
     return int(min(candidates))
 
 # ----- Diagnostics (BTG worth-it rule) -----
+import math  # keep at top once; harmless here if already imported
 SERVINGS = 5  # 5 glasses per bottle
 
-# Minimum glass price needed to hit 1.20× / 1.25× rule (menu-rounded UP)
-out["GlassNeeded120"] = [menu_round_up((1.20 * b) / SERVINGS) for b in out["BottlePriceRnd"]]
-out["GlassNeeded125"] = [menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]]
+def floor_for_color(color: str) -> int:
+    return FloorRedSpark if (color or "").strip().lower() in ("red", "sparkling") else FloorWhiteRose
 
+# Needed $/glass to hit target (whole dollars, respect floors; no $5/9 rounding here)
+def needed_per_glass(bottle_rnd: float, target_mult: float, servings: int, color: str) -> int:
+    base = math.ceil((target_mult * bottle_rnd) / servings)
+    flo  = floor_for_color(color)
+    return max(base, flo)
+
+# Minimum glass price needed to hit 1.20× / 1.25×
+out["GlassNeeded120"] = [
+    needed_per_glass(b, 1.20, SERVINGS, c) for b, c in zip(out["BottlePriceRnd"], out["Color"])
+]
 out["GlassNeeded125"] = [
-    menu_round_up((1.25 * b) / SERVINGS) for b in out["BottlePriceRnd"]
+    needed_per_glass(b, 1.25, SERVINGS, c) for b, c in zip(out["BottlePriceRnd"], out["Color"])
 ]
 
-# ---- Cap blocking check ----
-out["CapBlocks120"] = [g > float(GlassCap) for g in out["GlassNeeded120"]]
-out["CapBlocks125"] = [g > float(GlassCap) for g in out["GlassNeeded125"]]
-
-# ---- Actual check: does GlassPrice meet or exceed the needed price? ----
+# Cap blocking and OK checks
+out["CapBlocks120"] = out["GlassNeeded120"] > GlassCap
+out["CapBlocks125"] = out["GlassNeeded125"] > GlassCap
 out["GlassRevenueOK120"] = out["GlassPrice"] >= out["GlassNeeded120"]
 out["GlassRevenueOK125"] = out["GlassPrice"] >= out["GlassNeeded125"]
 
-# ---- Extra: how many glasses would we need to sell at current GlassPrice? ----
-out["GlassesNeededFor120"] = np.ceil(
-    (1.20 * out["BottlePriceRnd"]) / out["GlassPrice"]
-).astype(int)
-out["GlassesNeededFor125"] = np.ceil(
-    (1.25 * out["BottlePriceRnd"]) / out["GlassPrice"]
-).astype(int)
+# How many pours needed at current GlassPrice?
+out["GlassesNeededFor120"] = [
+    math.ceil((1.20 * b) / gp) for b, gp in zip(out["BottlePriceRnd"], out["GlassPrice"])
+]
+out["GlassesNeededFor125"] = [
+    math.ceil((1.25 * b) / gp) for b, gp in zip(out["BottlePriceRnd"], out["GlassPrice"])
+]
 
-# ---- Optional: is BTG “worth it”? (can hit target within 5 pours) ----
+# Worth-it flags (can we hit target within 5 pours?)
 out["BTG_WorthIt@120"] = out["GlassesNeededFor120"] <= SERVINGS
 out["BTG_WorthIt@125"] = out["GlassesNeededFor125"] <= SERVINGS
 
@@ -204,7 +212,9 @@ cols = [
     "GlassPriceRaw", "GlassPriceRnd", "GlassPrice",
     "Premium_AddOn", "Premium_Mult",
     "GlassRevenueOK120", "GlassNeeded120", "CapBlocks120",
-    "GlassRevenueOK125", "GlassNeeded125", "CapBlocks125"
+    "GlassesNeededFor120", "BTG_WorthIt@120",
+    "GlassRevenueOK125", "GlassNeeded125", "CapBlocks125",
+    "GlassesNeededFor125", "BTG_WorthIt@125"
 ]
 
 if not out.empty:
