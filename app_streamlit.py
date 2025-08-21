@@ -195,10 +195,10 @@ cols = [
     "GlassRevenueOK125", "GlassNeeded125", "CapBlocks125"
 ]
 
-    st.subheader("Results")
-    st.dataframe(out[cols], use_container_width=True)
+st.subheader("Results")
+st.dataframe(out[cols], use_container_width=True)
 
-    csv = out[cols].to_csv(index=False).encode("utf-8")
-    st.download_button("Download priced CSV", data=csv, file_name="priced_wines.csv", mime="text/csv")
+csv = out[cols].to_csv(index=False).encode("utf-8")
+st.download_button("Download priced CSV", data=csv, file_name="priced_wines.csv", mime="text/csv")
 else:
     st.info("Add wines above to see results.")
